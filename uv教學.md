@@ -18,3 +18,7 @@
 3. 更改 .python_version 成 3.13
     ```echo 3.13 > .python-version ```
 
+4. 推送到 github
+    ```git add .```
+    ```git commit -m "init commit"```
+    ```git push origin master```
