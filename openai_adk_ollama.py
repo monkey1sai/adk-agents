@@ -11,16 +11,22 @@ from agents.voice import (
 import random
 
 ollama_model = LitellmModel(
-    model = "ollama/granite3.2:2b",
+    model = "ollama/deepseek-r1:1.5b",
     base_url = "http://localhost:11434")
+
+docker_model = LitellmModel(
+    model = "docker/granite3.2:2b",
+    base_url = "http://localhost:12434")
+
 
 @function_tool
 def get_weather(location: str) -> str:
     """
     取得指定地點的天氣資訊。
-    
     Args:
         location: 地點名稱，例如 "台北" 或 "Tokyo"
+    Returns:
+        天氣描述字串。
     """
     # --- 除錯關鍵：印出訊息確認工具真的有被執行 ---
     print(f"\n[DEBUG] 正在執行 get_weather 工具，地點: {location}")
@@ -40,8 +46,8 @@ agent = Agent(
     tools=[get_weather],
     instructions=(
         "你是一個有用的天氣助理。"
-        "當使用者詢問天氣時，請使用 `get_weather` 工具取得資訊。"
-        "取得資訊後，請直接根據工具的回傳結果回答使用者，不要重複呼叫工具。"
+          "當使用者詢問天氣時，請使用 `get_weather` 工具取得資訊。"
+          "取得資訊後，請直接根據工具的回傳結果回答使用者，不要重複呼叫工具。"
     )    
 )
 
