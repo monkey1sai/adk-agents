@@ -1,44 +1,39 @@
 from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
-from agents.extensions.handoff_prompt import prompt_with_handoff_instructions
-from agents.voice import (
-    AudioInput,
-    SingleAgentVoiceWorkflow,
-    SingleAgentWorkflowCallbacks,
-    VoicePipeline,
+from pydantic import BaseModel, Field
+import random
+import os
+import asyncio
+
+# --- 設定 1: 開啟詳細除錯紀錄 ---
+# 這會讓您在終端機看到送給 Ollama 的完整 JSON 以及 Ollama 的回應
+os.environ['LITELLM_LOG'] = 'DEBUG'
+
+# --- 設定 2: 使用正確的模型名稱 ---
+# 建議先用 qwen2.5:7b 測試，確認流程跑通後再換大模型
+# 如果您堅持要用 14b，請確保已執行 `ollama pull qwen2.5:14b`
+ollama_model = LitellmModel(
+    model="ollama/gemini-3-pro-preview:latest",  # 請確認此名稱與 `ollama list` 中的一致
+    base_url="http://localhost:11434"
 )
 
-import random
+class WeatherInput(BaseModel):
+    location: str = Field(..., description="The location name to get weather for, e.g. 'Taipei'. Do not use 'city'.")
 
-ollama_model = LitellmModel(
-    model = "ollama/deepseek-r1:1.5b",
-    base_url = "http://localhost:11434")
-
-docker_model = LitellmModel(
-    model = "docker/granite3.2:2b",
-    base_url = "http://localhost:12434")
-
-
-@function_tool
-def get_weather(location: str) -> str:
-    """
-    取得指定地點的天氣資訊。
-    Args:
-        location: 地點名稱，例如 "台北" 或 "Tokyo"
-    Returns:
-        天氣描述字串。
-    """
-    # --- 除錯關鍵：印出訊息確認工具真的有被執行 ---
-    print(f"\n[DEBUG] 正在執行 get_weather 工具，地點: {location}")
+@function_tool(description_override="取得指定地點的天氣資訊。", strict_mode=False)
+def get_weather(input: WeatherInput) -> str:
+    """取得指定地點的天氣資訊。"""
+    print(f"\n[DEBUG] 正在執行 get_weather 工具，地點: {input.location}")
     
     weather_conditions = ["晴天", "多雲", "下雨", "颱風", "陰天"]
     temperature = random.randint(15, 35)
     condition = random.choice(weather_conditions)
-    result = f"{location}的天氣是{condition}，溫度約為{temperature}°C。"
-    
-    print(f"[DEBUG] 工具回傳結果: {result}\n")
-    return result
 
+    # Qwen 2.5 非常聰明，通常不需要太多額外的 Prompt，給它乾淨的資訊即可
+    natural_language_result = f"{input.location}的天氣是{condition}，氣溫約為{temperature}度。"
+    
+    print(f"[DEBUG] 工具回傳結果: {natural_language_result}\n")
+    return natural_language_result
 
 agent = Agent(
     name="agent",
@@ -46,38 +41,25 @@ agent = Agent(
     tools=[get_weather],
     instructions=(
         "你是一個有用的天氣助理。"
-          "當使用者詢問天氣時，請使用 `get_weather` 工具取得資訊。"
-          "取得資訊後，請直接根據工具的回傳結果回答使用者，不要重複呼叫工具。"
+        "當使用者詢問天氣時，請使用 `get_weather` 工具。"
+        "取得資訊後，請用自然的中文回答使用者。"
     )    
 )
 
 async def main():
-    print("正在呼叫 Agent...")
+    print(f"正在呼叫 Agent (使用模型: {ollama_model.model})...")
+    print("如果卡住太久，請檢查 Ollama 是否正在載入模型 (觀察 VRAM 使用量)...")
+    
     try:
-        # 加入 verbose=True (如果 Runner 支援) 或單純印出結果物件
+        # 加入 timeout 參數 (如果 Runner 支援) 或單純等待
         result = await Runner.run(agent, "今天台北天氣如何?")
         
         print("--- 執行結果 ---")
-        print(f"Final Output: '{result.final_output}'")
-        
-        # 檢查是否有中間步驟的訊息 (Chat History)
-        if hasattr(result, 'chat_history'):
-            print("\n--- 對話紀錄 ---")
-            for msg in result.chat_history:
-                print(f"[{msg.role}]: {msg.content}")
+        print(f"Final Output: {result.final_output}")
         
     except Exception as e:
         print(f"發生錯誤: {e}")
+        print("提示: 如果是 NotFoundError，請確認您已執行 `ollama pull <model_name>`")
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
-
-    # print("Starting voice agent...")
-    # voice_workflow = SingleAgentVoiceWorkflow(
-    #     agent=chiness_agent,
-    #     voice_pipeline=VoicePipeline(),
-    #     callbacks=SingleAgentWorkflowCallbacks(),
-    # )
-
-    # voice_workflow.run(AudioInput())
