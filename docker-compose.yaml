@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm-proxy
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./config/litellm_config.yaml:/app/config.yaml
+    command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
+    environment:
+      # 讓容器能連到 Host 的 Ollama
+      OLLAMA_API_BASE: "http://host.docker.internal:11434"
+      
+      # [突破點 6] 偽造 API Key：
+      # 當 LiteLLM 被設定為 OpenAI Provider (為了走 /v1 協定) 時，
+      # 它內部會檢查是否有 OPENAI_API_KEY。
+      # 這裡必須給一個非空值，否則 Proxy 啟動或執行時會報 AuthenticationError。
+      OPENAI_API_KEY: "fake-key-for-ollama" 
+      
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

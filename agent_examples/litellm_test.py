@@ -1,48 +1,61 @@
+import asyncio
 from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
-from agents import set_tracing_disabled  # 禁用 tracing 以避免需 OpenAI Key
-import asyncio
+from agents import set_tracing_disabled
+# 移除 Pydantic 的依賴，簡化結構
+# from pydantic import BaseModel, Field 
 
-# 禁用 tracing（避免上傳到 OpenAI）
-set_tracing_disabled(False)
+# 禁用 tracing
+set_tracing_disabled(True)
 
-# 定義一個簡單工具（Agent 可呼叫的函數）
+# [突破點 1] 簡化工具定義：
+# 我們移除了 Pydantic BaseModel (WeatherInput)，直接在函式參數中定義。
+# 原因：Qwen 2.5 等小模型在處理 Tool Calling 時，容易忽略 Pydantic 生成的巢狀 "input" 結構。
+# 改用扁平參數後，生成的 Schema 變為 {"city": "..."}，模型能正確生成符合格式的 JSON。
 @function_tool
 def get_weather(city: str) -> str:
-    """取得城市天氣的工具。"""
-    # 模擬天氣查詢（實際可整合 API）
-    return f"{city} 的天氣是晴天，溫度 25°C。"
+    """
+    Get weather information.
 
-# 建立 LLM Model：使用 LiteLLM Proxy 的端點
-# model="llama3" 對應 config.yaml 中的 model_name；api_base 指向本地 Proxy
+    Args:
+        city: The city name in English, e.g. 'Taipei'.
+    """
+    print(f"\n[Proxy Tool] Fetching weather for: {city}")
+    return f"{city} is Sunny, 25°C."
+
+# 建立 LLM Model (透過 Proxy)
 llm_model = LitellmModel(
-    model="openai/ollama/qwen2.5",  # 或直接 "ollama/llama3" 如果未用 config
-    api_key="sk-1234", # Proxy 需要任意非空字串
-    base_url="http://localhost:4000/v1",  # LiteLLM Proxy 端點
-    # 無需 api_key，因為是本地 Ollama
+    # [突破點 2] 模型名稱設定：
+    # 1. "openai/" 前綴：強制 Python SDK 使用 OpenAI 協定 (/chat/completions) 發送請求。
+    #    這解決了 LiteLLM Proxy 預設走 Ollama 原生協定導致的路徑錯誤 (404/500)。
+    # 2. "ollama/qwen2.5" 後綴：這必須與 litellm_config.yaml 中的 `model_name` 完全一致。
+    #    Proxy 收到請求後，會根據這個名字去查找後端對應的真實模型 (qwen2.5:7b)。
+    model="openai/ollama/qwen2.5", 
+    
+    # [突破點 3] 連線設定：
+    # 指向 Docker 容器中的 LiteLLM Proxy (Port 4000)。
+    # api_key 雖然 Proxy 不驗證內容，但 OpenAI 協定要求必填，否則會報 AuthenticationError。
+    api_key="sk-1234", 
+    base_url="http://localhost:4000", 
 )
 
-# 建立 Agent：配備指令、工具和 LLM Model
 agent = Agent(
-    name="WeatherAssistant",
-    instructions="你是一個天氣助手。使用 get_weather 工具來回答用戶的天氣查詢，只回覆相關資訊。",
-    model=llm_model,  # 使用自訂 LLM Model
-    tools=[get_weather],  # 附加工具
+    name="WeatherBot",
+    model=llm_model,
+    tools=[get_weather],
+    instructions=(
+        "請用中文回答用戶的問題。"
+    )
 )
 
 async def main():
-    print("Running Agent with Qwen 2.5...")
+    print("Running Agent via LiteLLM Proxy (Qwen 2.5)...")
     try:
-        # 執行 Agent
-        result = await Runner.run(agent, "What is the weather in Taipei?")
-        
+        result = await Runner.run(agent, "先介紹你自己, 然後告訴我台北的天氣如何?")
         print("\n--- Final Response ---")
         print(result.final_output)
-        
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
-    

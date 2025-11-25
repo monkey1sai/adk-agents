@@ -1,10 +1,30 @@
 model_list:
-  - model_name: ollama/llama3
-    litellm_params:
-      model: ollama/llama3.1:8b
-      temperature: 0.1
+  # - model_name: ollama/llama3
+  #   litellm_params:
+  #     model: openai/ollama/llama3.1:8b
+  #     temperature: 0
+  #     api_base: http:/localhost:11434/v1
+  #     aoi_key: ollama
 
   - model_name: ollama/qwen2.5
     litellm_params:
-      model: ollama/qwen2.5:14b-instruct-q2_K 
-      temperature: 0.1
+      # [突破點 4] 強制使用 OpenAI 協定：
+      # 使用 "openai/" 前綴 (如 openai/qwen2.5:7b) 加上 api_base 指向 /v1。
+      # 這會強迫 LiteLLM 以 OpenAI 格式 (而非 Ollama 原生格式) 轉發請求。
+      # 這是解決 Tool Calling 格式錯誤 (Max turns exceeded) 的關鍵。
+      model: openai/qwen2.5:7b
+      
+      # [突破點 5] 溫度控制：
+      # 在這裡強制設為 0。小模型 (如 7B) 若溫度不為 0，
+      # 容易在 Tool Calling 時產生幻覺或輸出錯誤的 JSON。
+      temperature: 0
+      
+      api_base: http://host.docker.internal:11434/v1
+      api_key: ollama
+
+  # - model_name: ollama/gemma3-27b
+  #   litellm_params:
+  #     model: openai/ollama/gemma3:27b
+  #     temperature: 0
+  #     api_base: http:/localhost:11434/v1
+  #     aoi_key: ollama
