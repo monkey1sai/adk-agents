@@ -30,7 +30,7 @@ def get_weather(city: str) -> str:
 # model: 指定模型名稱，這裡使用 openai/ 前綴是為了讓 LiteLLM 使用 OpenAI 兼容模式
 # base_url: 指向本地 Ollama 的 API 端點 (OpenAI 兼容介面)
 llm_model = LitellmModel(
-    model="openai/llama3.1:8b", 
+    model="openai/gemma3:27b",
     api_key="ollama_api_key_here",  # Ollama 不需要真實 Key，但欄位不可為空
     base_url="http://localhost:11434/v1",
 )
