@@ -14,13 +14,10 @@ class MathHomeworkOutput(BaseModel):
     is_math_homework: bool
     reasoning: str
 
-
-
 ollama_model = LitellmModel(
     model = "ollama/granite4:latest",
     base_url = "http://localhost:11434"
     )
-
 
 guardrail_agent = Agent( # (1)!
     name="Guardrail check",
@@ -36,7 +33,6 @@ guardrail_agent = Agent( # (1)!
 
     output_type=MathHomeworkOutput,
 )
-
 
 @input_guardrail
 async def math_guardrail(

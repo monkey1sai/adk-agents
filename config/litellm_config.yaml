@@ -1,0 +1,10 @@
+model_list:
+  - model_name: ollama/llama3
+    litellm_params:
+      model: ollama/llama3.1:8b
+      temperature: 0.1
+
+  - model_name: ollama/qwen2.5
+    litellm_params:
+      model: ollama/qwen2.5:14b-instruct-q2_K 
+      temperature: 0.1
