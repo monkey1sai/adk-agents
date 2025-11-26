@@ -46,7 +46,7 @@ llm_model = LitellmModel(
 agent = Agent(
     name="WeatherAssistant",
     instructions=(
-        "You are a helpful weather assistant."
+        "請用中文回答用戶的問題。."
     ),
     model=llm_model,
     tools=[get_weather],
@@ -63,7 +63,7 @@ async def main():
     try:
         # 執行 Agent，傳入使用者的查詢
         # run 方法會自動處理思考、工具呼叫與回應的迴圈
-        result = await runner.run(agent, "台北的天氣如何？")
+        result = await runner.run(agent, "先介紹你自己, 然後告訴我台北的天氣如何")
         
         print("--- 最終結果 ---")
         print("Agent 回覆：", result.final_output)
