@@ -2,6 +2,7 @@
 
 本專案展示如何使用 Microsoft ADK Agents 框架，透過 LiteLLM Proxy 連接本地運行的 Ollama 模型 (Qwen 2.5)，並成功實現 Tool Calling 功能。
 
+
 ## 系統架構
 
 ```mermaid
@@ -182,4 +183,25 @@ model_list:
       api_base: http://host.docker.internal:11434/v1 # [突破點] /v1 路徑
       api_key: ollama
       temperature: 0                    # [突破點] 溫度 0
+```
+
+## 如何執行 (How to Run)
+
+### 1. 準備 Ollama 模型
+確保您的本機 Ollama 服務已啟動，並下載 Qwen 2.5 模型：
+```bash
+ollama pull qwen2.5:7b
+```
+
+### 2. 啟動 LiteLLM Proxy
+使用 Docker Compose 啟動 Proxy 服務：
+```bash
+docker-compose up -d
+```
+確認容器 `litellm-proxy` 已成功啟動且無錯誤。
+
+### 3. 執行 Python Client
+進入虛擬環境後，執行測試腳本：
+```bash
+python agent_examples/litellm_test.py
 ```

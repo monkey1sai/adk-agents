@@ -1,3 +1,9 @@
+"""
+[LangChain + Ollama 範例]
+此檔案展示如何使用 LangChain 框架連接 Ollama 模型進行 Tool Calling (工具呼叫)。
+它示範了手動處理對話歷史、執行工具並將結果回傳給模型的完整流程。
+這是一個對照組範例，用來比較 LangChain 與 Microsoft ADK Agents 的實作差異。
+"""
 import random
 from langchain_ollama import ChatOllama
 from langchain_core.tools import tool

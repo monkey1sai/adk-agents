@@ -4,6 +4,10 @@ services:
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     container_name: litellm-proxy
+
+    # [新增設定] 讓容器隨 Docker Desktop 啟動而自動啟動
+    restart: always
+
     ports:
       - "4000:4000"
     volumes:
@@ -11,13 +15,57 @@ services:
     command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
     environment:
       # 讓容器能連到 Host 的 Ollama
-      OLLAMA_API_BASE: "http://host.docker.internal:11434"
+      # OLLAMA_API_BASE: "http://host.docker.internal:11434"
+      # 讓容器能連到 docker 內的 Ollama
+      OLLAMA_API_BASE: "http://ollama:11434/v1"
       
       # [突破點 6] 偽造 API Key：
       # 當 LiteLLM 被設定為 OpenAI Provider (為了走 /v1 協定) 時，
       # 它內部會檢查是否有 OPENAI_API_KEY。
       # 這裡必須給一個非空值，否則 Proxy 啟動或執行時會報 AuthenticationError。
       OPENAI_API_KEY: "fake-key-for-ollama" 
-      
+    depends_on:
+      - ollama
+
+
+  # 2. [新增] Ollama 服務
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    restart: always
+
+    # [關鍵修正 1] 增加共享記憶體
+    # Docker 預設 64MB 對 LLM 來說太小，容易導致載入時卡死
+    shm_size: '32gb'
+
+    # [資源釋放 2] 解除系統層級限制 (Ulimits)
+    # 這對 AI 運算非常重要，避免因為堆疊溢位或記憶體鎖定限制導致崩潰
+    ulimits:
+      memlock: -1       # 解除鎖定記憶體限制 (Unlimited)
+      stack: 67108864   # 增加堆疊大小 (64MB)
+
+
+    ports:
+      # 暴露 11434 讓您可以從本機用 CLI (如 ollama list) 管理它
+      - "11434:11434"
+    volumes:
+      # [關鍵] 將模型資料掛載到本機，避免重啟後模型消失
+      # 您可以在專案目錄下建立一個 ollama_data 資料夾，或指定其他路徑
+      - ./ollama_data:/root/.ollama
+
+    # [關鍵修正 2] 啟用 Debug 模式以便觀察 GPU 偵測狀況
+    environment:
+      - OLLAMA_DEBUG=1
+
+
+    # (選用) 如果您有 NVIDIA 顯卡，請取消註解以下部分以啟用 GPU 加速
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
     extra_hosts:
       - "host.docker.internal:host-gateway"

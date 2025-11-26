@@ -1,3 +1,10 @@
+"""
+[Microsoft ADK Agents + LiteLLM Proxy 範例]
+此檔案是本專案的核心測試範例。
+它展示如何設定 Microsoft ADK Agent 透過 LiteLLM Proxy (Port 4000) 連接後端模型。
+此範例包含了解決協定問題的關鍵設定 (如 `openai/` 前綴與簡化的工具定義)，
+用以驗證 Proxy 轉發、Docker 網路通訊與 Tool Calling 的正確性。
+"""
 import asyncio
 from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel

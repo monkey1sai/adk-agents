@@ -18,8 +18,17 @@ model_list:
       # 在這裡強制設為 0。小模型 (如 7B) 若溫度不為 0，
       # 容易在 Tool Calling 時產生幻覺或輸出錯誤的 JSON。
       temperature: 0
+
+      # 方法 1. http://host.docker.internal:11434/v1 呼叫外部 Ollama 服務
+      # api_base: http://host.docker.internal:11434/v1
+
+      # 方法 2. 使用 Docker 網路內的 Ollama 服務
+      # api_base: http://ollama:11434/v1 # ollama 代表containername, docker內部可以解析它, 指向 ollama 服務
+
+      # 方法 3. LiteLLM 會自動去讀取 Docker 傳進來的 OLLAMA_API_BASE 值
+      api_base: os.environ/OLLAMA_API_BASE
       
-      api_base: http://host.docker.internal:11434/v1
+
       api_key: ollama
 
   # - model_name: ollama/gemma3-27b

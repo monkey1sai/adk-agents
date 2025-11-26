@@ -1,3 +1,10 @@
+"""
+[Microsoft ADK Agents Guardrail 範例]
+此檔案展示 Microsoft ADK Agents 的 Guardrail (護欄) 功能。
+它定義了一個輸入護欄 (Input Guardrail)，利用另一個 Agent 來審查使用者輸入
+(在此例中為偵測是否為數學作業)，並在主 Agent 執行前進行攔截或驗證。
+這展示了如何建立更安全或受控的 Agent 應用。
+"""
 from pydantic import BaseModel
 from agents import (
     Agent,

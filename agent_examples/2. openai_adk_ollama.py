@@ -1,3 +1,9 @@
+"""
+[Microsoft ADK Agents + Ollama 直連範例]
+此檔案展示如何使用 Microsoft ADK Agents 框架直接連接本地運行的 Ollama 服務。
+它利用 Ollama 提供的 OpenAI 相容介面 (Base URL: http://localhost:11434/v1)，
+不經過 LiteLLM Proxy，直接測試 Agent 與 Ollama 的整合與工具呼叫功能。
+"""
 import asyncio
 from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
@@ -30,9 +36,9 @@ def get_weather(city: str) -> str:
 # model: 指定模型名稱，這裡使用 openai/ 前綴是為了讓 LiteLLM 使用 OpenAI 兼容模式
 # base_url: 指向本地 Ollama 的 API 端點 (OpenAI 兼容介面)
 llm_model = LitellmModel(
-    model="openai/gemma3:27b",
+    model="openai/qwen2.5:7b",
     api_key="ollama_api_key_here",  # Ollama 不需要真實 Key，但欄位不可為空
-    base_url="http://localhost:11434/v1",
+    base_url="http://localhost:11434/v1", # ollama server 支援 OpenAI 兼容介面(/v1),如果不支援就無法這樣使用
 )
 
 # 建立 Agent
