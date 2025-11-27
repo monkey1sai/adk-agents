@@ -1,13 +1,20 @@
 import asyncio
 import logging
 from src.core.factory import AgentFactory
+from src.core.bootstrap import register_providers
 from src.config import settings
 
 # 設定 Log
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 async def main():
     print(f"=== Agent System Starting ({settings.adk_framework.value.upper()} Mode) ===")
+    
+    # [Bootstrap] 啟動時註冊所有 Providers
+    register_providers()
     
     try:
         # 1. 透過工廠取得 Runner (Strategy Pattern)
@@ -15,14 +22,19 @@ async def main():
         
         # 2. 執行查詢
         query = "台北的天氣如何？"
-        print(f"\n👤 User: {query}")
+        session_id = "session_demo_001" # 模擬 Session ID
+        print(f"\n👤 User: {query} (Session: {session_id})")
         
-        response = await runner.run(query)
+        response = await runner.run(query, session_id=session_id)
         
         print(f"\n🤖 Agent: {response}")
         
+    except ImportError as e:
+        print(f"\n❌ Configuration Error: {e}")
+        print("Tip: Check your .env file or install missing packages.")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n❌ Unexpected Error: {e}")
+        logging.exception("Full traceback:")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -23,6 +23,7 @@
             "request": "launch",
             "module": "src.main",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
