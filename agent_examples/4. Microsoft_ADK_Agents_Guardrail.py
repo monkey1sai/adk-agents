@@ -1,68 +1,105 @@
 """
-[Microsoft ADK Agents + LiteLLM Proxy 範例]
-此檔案是本專案的核心測試範例。
-它展示如何設定 Microsoft ADK Agent 透過 LiteLLM Proxy (Port 4000) 連接後端模型。
-此範例包含了解決協定問題的關鍵設定 (如 `openai/` 前綴與簡化的工具定義)，
-用以驗證 Proxy 轉發、Docker 網路通訊與 Tool Calling 的正確性。
+[Microsoft ADK Agents - Input Guardrail 範例]
+
+本檔案展示如何使用 Microsoft ADK Agents 的 Guardrail (護欄) 機制來過濾使用者輸入。
+在此範例中，我們建立了一個 "Math Guardrail"，用來攔截使用者要求 AI 幫忙寫數學作業的請求。
+
+### 專案範例總覽 (Agent Examples Overview)
+
+| 檔案名稱 | 用途說明 |
+|----------|----------|
+| `1. lainchang_ollama.py` | **LangChain 對照組**：展示如何用 LangChain + Ollama 實作 Tool Calling。 |
+| `2. openai_adk_ollama.py` | **ADK 直連模式**：不透過 Proxy，直接連接 Ollama (Port 11434)。 |
+| `3. openai_adk_litellmProxy_ollama.py` | **(本檔案) Guardrail 範例**：展示如何實作輸入過濾器 (Input Guardrail)。 |
+| `4. Microsoft_ADK_Agents_Guardrail.py` | **WeatherBot 範例**：(注意：目前內容為天氣機器人) 展示透過 LiteLLM Proxy 進行 Tool Calling。 |
+| `5. google_adk_agent_ollama.py` | **參數調優範例**：展示如何調整 `ModelSettings` (如 `parallel_tool_calls=False`) 以穩定小模型。 |
+
+### 本範例關鍵技術
+
+1.  **Guardrail Agent**: 一個專門負責「檢查」的 Agent，它的輸出是一個結構化的 Pydantic 物件 (`MathHomeworkOutput`)。
+2.  **@input_guardrail**: 裝飾器，用來定義攔截邏輯。如果 `tripwire_triggered` 為 True，則主 Agent 不會執行，直接拋出例外。
+3.  **LiteLLM Proxy**: 使用 Port 4000 連接本地模型，確保輸出格式穩定。
+
 """
-import asyncio
-from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
-from agents import set_tracing_disabled
-# 移除 Pydantic 的依賴，簡化結構
-# from pydantic import BaseModel, Field 
-
-# 禁用 tracing
-set_tracing_disabled(True)
-
-# [突破點 1] 簡化工具定義：
-# 我們移除了 Pydantic BaseModel (WeatherInput)，直接在函式參數中定義。
-# 原因：Qwen 2.5 等小模型在處理 Tool Calling 時，容易忽略 Pydantic 生成的巢狀 "input" 結構。
-# 改用扁平參數後，生成的 Schema 變為 {"city": "..."}，模型能正確生成符合格式的 JSON。
-@function_tool
-def get_weather(city: str) -> str:
-    """
-    Get weather information.
-
-    Args:
-        city: The city name in English, e.g. 'Taipei'.
-    """
-    print(f"\n[Proxy Tool] Fetching weather for: {city}")
-    return f"{city} is Sunny, 25°C."
-
-# 建立 LLM Model (透過 Proxy)
-llm_model = LitellmModel(
-    # [突破點 2] 模型名稱設定：
-    # 1. "openai/" 前綴：強制 Python SDK 使用 OpenAI 協定 (/chat/completions) 發送請求。
-    #    這解決了 LiteLLM Proxy 預設走 Ollama 原生協定導致的路徑錯誤 (404/500)。
-    # 2. "ollama/qwen2.5" 後綴：這必須與 litellm_config.yaml 中的 `model_name` 完全一致。
-    #    Proxy 收到請求後，會根據這個名字去查找後端對應的真實模型 (qwen2.5:7b)。
-    model="openai/ollama/qwen2.5", 
-    
-    # [突破點 3] 連線設定：
-    # 指向 Docker 容器中的 LiteLLM Proxy (Port 4000)。
-    # api_key 雖然 Proxy 不驗證內容，但 OpenAI 協定要求必填，否則會報 AuthenticationError。
-    api_key="sk-1234", 
-    base_url="http://localhost:4000", 
+from pydantic import BaseModel
+from agents import (
+    Agent,
+    GuardrailFunctionOutput,
+    InputGuardrailTripwireTriggered,
+    RunContextWrapper,
+    Runner,
+    TResponseInputItem,
+    input_guardrail,
+    set_tracing_disabled
 )
 
-agent = Agent(
-    name="WeatherBot",
+set_tracing_disabled(True)
+# 1. 定義 Guardrail 的輸出結構
+# 這是 Guardrail Agent 判斷後的結果，必須包含是否觸發 (bool) 與理由 (str)
+class MathHomeworkOutput(BaseModel):
+    is_math_homework: bool
+    reasoning: str
+
+# 2. 設定 LLM 模型 (透過 LiteLLM Proxy)
+llm_model=LitellmModel(
+    model="openai/ollama/qwen2.5",
+    api_key="ollama-key",
+    base_url="http://localhost:4000",
+)
+
+# 3. 建立 Guardrail 專用 Agent
+# 它的任務只有一個：判斷輸入是否為數學作業
+guardrail_agent = Agent( 
+    name="護欄檢查",
     model=llm_model,
-    tools=[get_weather],
-    instructions=(
-        "請用中文回答用戶的問題。"
+    instructions="檢查使用者是否要求你幫忙寫數學作業。",
+    
+    # Prompt 注入 / 參數設定：
+    # SDK 會告訴 LLM：「請你輸出的內容必須符合這個 JSON Schema」。
+    # 這通常是透過 OpenAI API 的 response_format 參數 
+    # (如果模型支援 Structured Outputs)，或是透過 System Prompt 強制要求輸出 JSON 格式。
+    output_type=MathHomeworkOutput, # 強制輸出結構化資料
+)
+
+# 4. 定義 Guardrail 函式
+# 這個函式會在主 Agent 執行前被呼叫
+@input_guardrail
+async def math_guardrail( 
+    ctx: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]
+) -> GuardrailFunctionOutput:
+    # 執行 Guardrail Agent 進行檢查
+    result = await Runner.run(guardrail_agent, input, context=ctx.context)
+
+    # 回傳檢查結果
+    # tripwire_triggered=True 表示攔截成功，主流程將中斷
+    return GuardrailFunctionOutput(
+        output_info=result.final_output, 
+        tripwire_triggered=result.final_output.is_math_homework,
     )
+
+# 5. 建立主 Agent (Customer Support)
+# 將 math_guardrail 加入 input_guardrails 列表
+agent = Agent(  
+    name="客戶支援代理",
+    model=llm_model,    
+    instructions="你是一位客戶支援代理。你負責協助客戶解決他們的問題。",
+    input_guardrails=[math_guardrail],
 )
 
 async def main():
-    print("Running Agent via LiteLLM Proxy (Qwen 2.5)...")
+    print("--- 開始護欄測試 ---")
+    print("使用者輸入: '你好，可以幫我解這個 x 嗎: 2x + 3 = 11?'")
+    
+    # This should trip the guardrail
     try:
-        result = await Runner.run(agent, "先介紹你自己, 然後告訴我台北的天氣如何?")
-        print("\n--- Final Response ---")
-        print(result.final_output)
-    except Exception as e:
-        print(f"Error: {e}")
+        await Runner.run(agent, "你好，可以幫我解這個 x 嗎: 2x + 3 = 11?")
+        print("護欄未觸發 - 這是非預期的結果")
 
+    except InputGuardrailTripwireTriggered:
+        print("\n[成功] 數學作業護欄已觸發！")
+        print("代理拒絕回答數學問題。")
+        
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())

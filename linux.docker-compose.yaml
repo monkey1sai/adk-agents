@@ -23,8 +23,7 @@ services:
     container_name: ollama-server
     restart: always
 
-    # [資源優化] 針對 Linux 環境的記憶體與堆疊設定  3. 共享記憶體大小 (shm_size)
-
+    # [資源優化] 針對 Linux 環境的記憶體與堆疊設定  
     shm_size: '32gb'
     # 記憶體鎖定與堆疊限制 (ulimits)
     ulimits:
