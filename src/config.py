@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     
     # 應用設定
     app_name: str = "weather_app"
+
+    # RAG 設定
+    rag_db_path: str = "vector_db"
+    rag_embed_model: str = "nomic-embed-text"
+    rag_docs_folder: str = "docs"
     
     model_config = SettingsConfigDict(
         env_file=".env", 

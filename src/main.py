@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from src.core.factory import AgentFactory
-from src.core.bootstrap import register_providers
+from src.core.bootstrap import bootstrap_system
 from src.config import settings
 
 # 設定 Log
@@ -13,8 +13,8 @@ logging.basicConfig(
 async def main():
     print(f"=== Agent System Starting ({settings.adk_framework.value.upper()} Mode) ===")
     
-    # [Bootstrap] 啟動時註冊所有 Providers
-    register_providers()
+    # [Bootstrap] 系統啟動引導 (註冊 + 預熱)
+    bootstrap_system()
     
     try:
         # 1. 透過工廠取得 Runner (Strategy Pattern)

@@ -7,6 +7,7 @@ from google.genai import types
 
 from src.config import Settings
 from src.tools.weather import get_weather
+from src.tools.knowledge import search_knowledge_base
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +47,9 @@ class GoogleProvider:
             name="GoogleWeatherBot",
             model=self.model,
             # [修正] 參數名稱應為 instructions (複數)
-            instruction="你是一個使用 Google ADK 的氣象助理。請用繁體中文回答。",
+            instruction="你是一個使用 Google ADK 的氣象與知識助理。請用繁體中文回答。",
             # [修正] 直接傳入原始函式 (Callable)，Google ADK 會自動解析
-            tools=[get_weather] 
+            tools=[get_weather, search_knowledge_base] 
         )
 
     async def run(self, user_query: str, session_id: str = "default") -> str:
