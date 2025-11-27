@@ -11,7 +11,21 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
-        }
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }            
+            
+        },
+        {
+            "name": "Python: Run src.main",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.main",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }        
     ]
 }
