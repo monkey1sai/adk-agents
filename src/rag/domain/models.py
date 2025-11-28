@@ -4,8 +4,8 @@ from typing import Dict, Any, Optional
 @dataclass
 class Chunk:
     """
-    Represents a piece of text that has been split from a larger document.
-    This is the core unit of retrieval.
+    代表從較大文件中分割出來的一段文字。
+    這是檢索的核心單位。
     """
     content: str
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -14,7 +14,7 @@ class Chunk:
 @dataclass
 class SearchResult:
     """
-    Represents a retrieved chunk with its relevance score.
+    代表檢索到的 Chunk 及其相關性分數。
     """
     chunk: Chunk
     score: float

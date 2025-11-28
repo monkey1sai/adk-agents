@@ -46,7 +46,6 @@ class GoogleProvider:
         return Agent(
             name="GoogleWeatherBot",
             model=self.model,
-            # [修正] 參數名稱應為 instructions (複數)
             instruction="你是一個使用 Google ADK 的氣象與知識助理。請用繁體中文回答。",
             # [修正] 直接傳入原始函式 (Callable)，Google ADK 會自動解析
             tools=[get_weather, search_knowledge_base] 

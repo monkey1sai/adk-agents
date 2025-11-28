@@ -14,13 +14,13 @@ MOCK_WEATHER_DATA = {
 
 def get_weather(city: str) -> str:
     """
-    Get weather information for a specific city.
+    獲取特定城市的天氣資訊。
     
     Args:
-        city: The name of the city (e.g., 'Taipei', 'New York').
+        city: 城市名稱 (例如：'Taipei', 'New York')。
         
     Returns:
-        A string describing the weather.
+        描述天氣的字串。
     """
     # [Fix] 使用 strip() 去除 LLM 可能產生的前後空白，並轉為小寫
     city_cleaned = city.strip().lower()

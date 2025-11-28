@@ -6,14 +6,14 @@ logger = logging.getLogger(__name__)
 
 class RetrievalService:
     """
-    Handles retrieval logic.
+    處理檢索邏輯。
     """
     def __init__(self, repo: VectorStoreRepository):
         self.repo = repo
 
     async def query(self, query_text: str, k: int = 4) -> str:
         """
-        Retrieves relevant context and formats it as a string for the LLM.
+        檢索相關上下文並將其格式化為字串以供 LLM 使用。
         """
         try:
             results = await self.repo.search(query_text, k=k)
@@ -29,6 +29,6 @@ class RetrievalService:
                 
             return "\n".join(context_parts)
         except Exception as e:
-            # [SRE Fix] Error Boundary: Catch exceptions and return graceful message
+            # [SRE Fix] 錯誤邊界：捕獲例外並回傳優雅的訊息
             logger.error(f"RAG Retrieval failed: {e}", exc_info=True)
             return "Error: Unable to access the knowledge base at this moment. Please try again later."

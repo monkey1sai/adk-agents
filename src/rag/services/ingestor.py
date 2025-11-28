@@ -2,7 +2,7 @@ import os
 import logging
 from typing import List
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.rag.domain.models import Chunk
 from src.rag.ports.repository import VectorStoreRepository
@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 class IngestionService:
     """
-    Handles the ETL pipeline: Extract (Load), Transform (Split), Load (Store).
+    處理 ETL 流程：擷取 (Load)、轉換 (Split)、載入 (Store)。
     """
     def __init__(self, repo: VectorStoreRepository):
         self.repo = repo
 
     def load_docs(self, folder: str) -> List[Chunk]:
         """
-        Loads documents from a folder and converts them to Chunks.
+        從資料夾載入文件並轉換為 Chunks。
         """
         if not os.path.exists(folder):
             logger.warning(f"Document folder {folder} does not exist.")
@@ -57,7 +57,7 @@ class IngestionService:
 
     def run_pipeline(self, folder: str = "docs"):
         """
-        Runs the full ingestion pipeline.
+        執行完整的資料匯入流程。
         """
         chunks = self.load_docs(folder)
         if chunks:

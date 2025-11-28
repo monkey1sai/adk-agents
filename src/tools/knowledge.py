@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 class RAGContainer:
     """
-    Simple Dependency Injection Container for RAG subsystem.
-    Manages the lifecycle of Repository and Services.
+    RAG 子系統的簡易依賴注入容器 (Dependency Injection Container)。
+    管理 Repository 和 Services 的生命週期。
     """
     _instance: Optional['RAGContainer'] = None
-    _lock: threading.Lock = threading.Lock() # [Add] Class-level lock
+    _lock: threading.Lock = threading.Lock() # [Add] 類別層級鎖
 
     def __init__(self):
         logger.info("Initializing RAG Container...")
@@ -23,8 +23,8 @@ class RAGContainer:
             embedding_model=settings.rag_embed_model
         )
         
-        # [SRE Fix] Warm-up: Force DB initialization during container startup
-        # This shifts the latency cost from "First User Request" to "App Startup"
+        # [SRE Fix] 預熱：在容器啟動期間強制初始化 DB
+        # 這將延遲成本從「第一次使用者請求」轉移到「應用程式啟動」
         logger.info("Warming up Vector DB connection...")
         _ = self.repo.db 
         
@@ -33,7 +33,7 @@ class RAGContainer:
 
     @classmethod
     def get_instance(cls) -> 'RAGContainer':
-        """Singleton accessor with Double-Checked Locking."""
+        """使用雙重檢查鎖定 (Double-Checked Locking) 的單例存取器。"""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None: # Double check inside lock
@@ -42,12 +42,12 @@ class RAGContainer:
     
     @classmethod
     def reset(cls):
-        """For testing purposes."""
+        """測試用途。"""
         cls._instance = None
 
 def ingest_documents(folder: Optional[str] = None) -> str:
     """
-    Admin tool to ingest documents from the docs folder.
+    從 docs 資料夾匯入文件的管理工具。
     """
     target_folder = folder or settings.rag_docs_folder
     container = RAGContainer.get_instance()
@@ -56,11 +56,11 @@ def ingest_documents(folder: Optional[str] = None) -> str:
 
 async def search_knowledge_base(query: str) -> str:
     """
-    Search the internal knowledge base (documents, PDFs) for relevant information.
-    Use this tool when the user asks about specific documents or internal data.
+    搜尋內部知識庫 (文件、PDF) 以獲取相關資訊。
+    當使用者詢問特定文件或內部資料時使用此工具。
     
     Args:
-        query: The search query (e.g., "What is the refund policy?", "Summary of project X").
+        query: 搜尋查詢 (例如："退款政策是什麼？", "專案 X 的摘要")。
     """
     container = RAGContainer.get_instance()
     return await container.retriever.query(query)
