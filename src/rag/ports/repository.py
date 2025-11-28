@@ -11,6 +11,10 @@ class VectorStoreRepository(Protocol):
         """將 Chunks 持久化到向量儲存中。"""
         ...
 
+    def delete_chunks_by_source(self, source_path: str) -> None:
+        """根據來源路徑刪除 Chunks。"""
+        ...
+
     async def search(self, query: str, k: int = 4) -> List[SearchResult]:
         """非同步地檢索給定查詢的相關 Chunks。"""
         ...

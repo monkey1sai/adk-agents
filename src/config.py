@@ -19,8 +19,8 @@ class Settings(BaseSettings):
 
     # RAG 設定
     rag_db_path: str = "vector_db"
-    rag_embed_model: str = "nomic-embed-text"
-    rag_docs_folder: str = "docs"
+    rag_embed_model: str = "embeddinggemma:latest"
+    rag_docs_folder: str = "src/docs" # [修正] 指向 src/docs
     
     model_config = SettingsConfigDict(
         env_file=".env", 

@@ -21,19 +21,20 @@ async def main():
         runner = AgentFactory.create_runner()
         
         # 2. 執行查詢
-        query = "台北的天氣如何？"
+        #query = "人工智慧最新研究進展 google在 2024 在最新發展"
+        query = "請問吳東凌在人工智慧發展報告中負責什麼？"
         session_id = "session_demo_001" # 模擬 Session ID
-        print(f"\n👤 User: {query} (Session: {session_id})")
+        print(f"\n[User]: {query} (Session: {session_id})")
         
         response = await runner.run(query, session_id=session_id)
         
-        print(f"\n🤖 Agent: {response}")
+        print(f"\n[Agent]: {response}")
         
     except ImportError as e:
-        print(f"\n❌ Configuration Error: {e}")
+        print(f"\n[Config Error]: {e}")
         print("Tip: Check your .env file or install missing packages.")
     except Exception as e:
-        print(f"\n❌ Unexpected Error: {e}")
+        print(f"\n[Error]: {e}")
         logging.exception("Full traceback:")
 
 if __name__ == "__main__":
