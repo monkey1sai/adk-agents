@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import json
+import re
 from pathlib import Path
 from typing import List, Any
 from agents import Agent, Runner, function_tool
@@ -81,9 +83,85 @@ class MicrosoftProvider:
         """執行 Agent 並回傳結果"""
         logger.info(f"[Microsoft ADK] Running agent with query: {user_query} (Session: {session_id})")
         
-        # [TODO] Microsoft ADK 的 Runner 目前是 Stateless 的。
-        # 若要支援多輪對話，需要在此處整合外部記憶體 (如 Redis) 或自行維護 History。
-        # 目前實作僅支援單輪對話 (Single-turn)，session_id 僅用於 Log 追蹤。
-        
         result = await Runner.run(self.agent, user_query)
-        return result.final_output
+        final_output = str(result.final_output)
+
+        # [SRE Fix] Robustness Pattern: Manual Tool Execution Recovery
+        # 針對小模型 (7B) 容易將 Tool Call 輸出為純文字 JSON 的問題，進行手動救援。
+        if '{"name":' in final_output and "arguments" in final_output:
+            logger.warning("⚠️ Detected raw JSON tool call in output. Attempting manual recovery...")
+            return await self._manual_tool_execution_recovery(final_output, user_query)
+        
+        return final_output
+
+    async def _manual_tool_execution_recovery(self, raw_output: str, original_query: str) -> str:
+        """
+        當模型輸出 Raw JSON 而非正確的 Tool Call Signal 時，手動解析並執行。
+        """
+        try:
+            # 1. 嘗試提取 JSON
+            # 尋找最外層的 {}
+            json_match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+            if not json_match:
+                return raw_output
+            
+            tool_call_data = json.loads(json_match.group(0))
+            tool_name = tool_call_data.get("name")
+            tool_args = tool_call_data.get("arguments", {})
+            
+            logger.info(f"🔄 Manual Execution: {tool_name}({tool_args})")
+            
+            # 2. 尋找對應的工具
+            target_tool = None
+            # self.agent.tools 裡面的工具可能被 function_tool 包裝過
+            # 我們需要遍歷並檢查名稱
+            for tool in self.agent.tools:
+                # Microsoft ADK 的 Tool 物件通常有 name 屬性
+                if hasattr(tool, "name") and tool.name == tool_name:
+                    target_tool = tool
+                    break
+                # 或者如果是原始函式
+                elif hasattr(tool, "__name__") and getattr(tool, "__name__") == tool_name:
+                    target_tool = tool
+                    break
+            
+            if not target_tool:
+                logger.error(f"Tool {tool_name} not found in agent tools.")
+                return raw_output
+
+            # 3. 執行工具
+            # 注意：Microsoft ADK 的 Tool 執行方式可能不同
+            # 如果是 function_tool 包裝的，通常有 run 或類似方法，或者它是 Callable
+            tool_result = ""
+            if callable(target_tool):
+                if asyncio.iscoroutinefunction(target_tool):
+                    tool_result = await target_tool(**tool_args)
+                else:
+                    tool_result = target_tool(**tool_args)
+            elif hasattr(target_tool, "run"):
+                 # 假設有 run 方法
+                 run_method = getattr(target_tool, "run")
+                 if asyncio.iscoroutinefunction(run_method):
+                     tool_result = await run_method(**tool_args)
+                 else:
+                     tool_result = run_method(**tool_args)
+            
+            logger.info(f"✅ Tool Result: {str(tool_result)[:100]}...")
+            
+            # 4. 將結果回傳給 Agent 進行總結 (Recursive Call)
+            # 我們構造一個新的 Prompt，包含工具執行結果
+            recovery_prompt = (
+                f"User Question: {original_query}\n"
+                f"System: I executed the tool '{tool_name}' for you manually.\n"
+                f"Tool Output: {tool_result}\n"
+                f"Instruction: Answer the user's question using ONLY the Tool Output above. "
+                f"If the Tool Output does not contain the answer, state that you have no information. "
+                f"DO NOT make up information or list unrelated topics."
+            )
+            
+            recovery_result = await Runner.run(self.agent, recovery_prompt)
+            return str(recovery_result.final_output)
+
+        except Exception as e:
+            logger.error(f"Manual recovery failed: {e}")
+            return raw_output

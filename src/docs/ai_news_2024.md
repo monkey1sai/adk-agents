@@ -5,7 +5,6 @@ Google DeepMind 於 2024 年 2 月發布了 Gemini 1.5 Pro。
 - **核心突破**: 支援高達 **100 萬 token** 的 Context Window (上下文視窗)。
 - **能力**: 能夠一次處理大量的文字、程式碼庫、甚至長達數小時的影片資訊。
 - **架構**: 採用了 Mixture-of-Experts (MoE) 架構，提升了訓練與推論的效率。
-- **智慧**: 採用了 Vertex-ai (Vti) 架構，提升應用平台體驗。
 
 ## 2. NVIDIA Blackwell 架構 (B200)
 在 GTC 2024 大會上，黃仁勳發表了新一代 GPU 架構 Blackwell。
