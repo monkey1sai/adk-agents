@@ -27,13 +27,19 @@ model_list:
 
       # 方法 3. LiteLLM 會自動去讀取 Docker 傳進來的 OLLAMA_API_BASE 值
       api_base: os.environ/OLLAMA_API_BASE
-      
-
+      api_key: ollama
+  
+  # 不支援 tool calling
+  - model_name: ollama/gemma3
+    litellm_params:
+      model: openai/gemma3:4b
+      temperature: 0
+      api_base: os.environ/OLLAMA_API_BASE
       api_key: ollama
 
-  # - model_name: ollama/gemma3-27b
-  #   litellm_params:
-  #     model: openai/ollama/gemma3:27b
-  #     temperature: 0
-  #     api_base: http:/localhost:11434/v1
-  #     aoi_key: ollama
+  - model_name: ollama/llama3.1
+    litellm_params:
+      model: openai/llama3.1:8b
+      temperature: 0
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: ollama

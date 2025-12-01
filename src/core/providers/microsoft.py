@@ -37,9 +37,9 @@ class MicrosoftProvider:
     def _create_llm(self) -> LitellmModel:
         """建立符合 LiteLLM Proxy 規範的模型實例"""
         return LitellmModel(
-            model=self.settings.model_name,
-            api_key=self.settings.api_key,
-            base_url=self.settings.base_url
+            model=self.settings.llm.full_model_name,
+            api_key=self.settings.llm.api_key.get_secret_value(),
+            base_url=self.settings.llm.base_url
         )
 
     def _load_instructions(self) -> str:

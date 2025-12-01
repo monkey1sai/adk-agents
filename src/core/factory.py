@@ -53,6 +53,7 @@ class AgentFactory:
         
         # [Optional DI] 如果 Provider 有 set_tools 方法，就注入工具
         if hasattr(runner, "set_tools"):
-            runner.set_tools(cls._global_tools)
+            # [Fix] 使用 getattr 動態呼叫，避開靜態型別檢查 (因為 AgentRunner 介面未定義 set_tools)
+            getattr(runner, "set_tools")(cls._global_tools)
             
         return runner

@@ -32,7 +32,7 @@ def create_search_tool(retriever: RetrievalService, ingestor: IngestionService) 
         # 每次搜尋前都檢查是否有新檔案需要匯入。
         try:
             # 直接使用閉包中的 ingestor，不再依賴全域容器
-            ingestor.run_pipeline(settings.rag_docs_folder)
+            ingestor.run_pipeline(settings.rag.docs_folder)
         except Exception as e:
             logger.error(f"自動匯入檢查失敗: {e}")
 
@@ -49,7 +49,7 @@ def create_ingest_tool(ingestor: IngestionService) -> IngestTool:
         """
         從 docs 資料夾匯入文件的管理工具。
         """
-        target_folder = folder or settings.rag_docs_folder
+        target_folder = folder or settings.rag.docs_folder
         ingestor.run_pipeline(target_folder)
         return f"Ingestion complete from {target_folder}"
         

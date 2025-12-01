@@ -13,8 +13,8 @@ async def main():
     
     # 1. 初始化 Repository
     repo = ChromaRepository(
-        persist_directory=settings.rag_db_path,
-        embedding_model=settings.rag_embed_model
+        persist_directory=settings.rag.db_path,
+        embedding_model=settings.rag.embed_model
     )
     
     query = "吳東凌"

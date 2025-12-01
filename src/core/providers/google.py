@@ -60,9 +60,9 @@ class GoogleProvider:
 
     def _create_llm(self) -> LiteLlm:
         return LiteLlm(
-            model=self.settings.model_name, # e.g. "openai/ollama/qwen2.5"
-            base_url=self.settings.base_url, # e.g. "http://localhost:4000"
-            api_key=self.settings.api_key
+            model=self.settings.llm.full_model_name, # e.g. "openai/ollama/qwen2.5"
+            base_url=self.settings.llm.base_url, # e.g. "http://localhost:4000"
+            api_key=self.settings.llm.api_key.get_secret_value()
         )
 
     def _load_instructions(self) -> str:
