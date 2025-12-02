@@ -21,8 +21,8 @@ async def main():
         runner = AgentFactory.create_runner()
         
         # 2. 執行查詢
-        query = "人工智慧最新研究進展 google在 2025年 在最新發展"
-        #query = "請問吳東凌在人工智慧發展報告中負責什麼？"
+        #query = "人工智慧最新的研究進展是什麼？"
+        query = "請問吳東凌在人工智慧發展報告中負責什麼？"
         session_id = "session_demo_001" # 模擬 Session ID
         print(f"\n[使用者]: {query} (工作階段: {session_id})")
         response = await runner.run(query, session_id=session_id)

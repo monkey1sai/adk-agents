@@ -1,6 +1,7 @@
 import logging
 from typing import List
 from src.rag.ports.repository import VectorStoreRepository
+from src.rag.domain.models import SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -12,23 +13,31 @@ class RetrievalService:
         self.repo = repo
 
     async def query(self, query_text: str, k: int = 4) -> str:
-        """
-        檢索相關上下文並將其格式化為字串以供 LLM 使用。
-        """
         try:
+            print(f"[DEBUG] RetrievalService.query 收到查詢: '{query_text}'")
+            logger.info(f"🔍 正在檢索: '{query_text}' (k={k})")
+            
             results = await self.repo.search(query_text, k=k)
             
             if not results:
+                print("[DEBUG] Repo 回傳空列表 []")
+                logger.warning(f"⚠️ 檢索結果為空: '{query_text}'")
                 return "在知識庫中找不到相關資訊。"
-                
-            # Format context
-            context_parts = []
-            for i, res in enumerate(results, 1):
-                source = res.chunk.metadata.get('source', '未知來源')
-                context_parts.append(f"--- 來源 {i} ({source}) ---\n{res.chunk.content}\n")
-                
-            return "\n".join(context_parts)
+            
+            print(f"[DEBUG] Repo 回傳了 {len(results)} 筆資料")
+            logger.info(f"✅ 找到 {len(results)} 筆相關資料")
+            return self._format_results(results)
+            
         except Exception as e:
-            # [SRE Fix] 錯誤邊界：捕獲例外並回傳優雅的訊息
-            logger.error(f"RAG Retrieval failed: {e}", exc_info=True)
-            return "錯誤: 目前無法存取知識庫，請稍後再試。"
+            print(f"[DEBUG] RetrievalService 發生例外: {e}")
+            logger.error(f"RAG Retrieval failed: {e}")
+            return f"檢索失敗: {e}"
+
+    def _format_results(self, results: List[SearchResult]) -> str:
+        formatted = []
+        for i, res in enumerate(results, 1):
+            source = res.chunk.metadata.get('source', 'unknown')
+            # 簡單處理路徑顯示
+            source_name = str(source).split('\\')[-1].split('/')[-1]
+            formatted.append(f"--- 來源 {i} ({source_name}) ---\n{res.chunk.content}\n")
+        return "\n".join(formatted)

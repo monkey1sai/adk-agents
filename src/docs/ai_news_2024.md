@@ -1,4 +1,5 @@
-# 人工智慧最新研究進展 (2024 Q1)
+人工智慧最新研究進展
+ (2024 Q1)
 
 ## 1. Google DeepMind: Gemini 1.5 Pro
 Google DeepMind 於 2024 年 2 月發布了 Gemini 1.5 Pro。

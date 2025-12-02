@@ -36,7 +36,7 @@ class LLMConfig(BaseSettings):
 class RAGConfig(BaseSettings):
     """RAG 知識庫相關設定"""
     db_path: str = Field(default="vector_db", validation_alias="RAG_DB_PATH")
-    embed_model: str = Field(default="embeddinggemma:latest", validation_alias="RAG_EMBED_MODEL")
+    embed_model: str = Field(default="nomic-embed-text:latest", validation_alias="RAG_EMBED_MODEL")
     docs_folder: str = Field(default="src/docs", validation_alias="RAG_DOCS_FOLDER")
 
     model_config = SettingsConfigDict(

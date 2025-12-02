@@ -6,3 +6,4 @@ vector_db/
 /src/temps/
 test_db/
 test_vector_db_e2e/
+ingestion_state.json
