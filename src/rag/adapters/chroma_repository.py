@@ -73,8 +73,11 @@ class ChromaRepository(VectorStoreRepository):
 
     def delete_chunks_by_source(self, source_path: str) -> None:
         """
-        根據來源路徑刪除 Chunks。
+        根據來源路徑刪除 Chunks (Idempotent Operation)。
         ChromaDB 支援透過 metadata 過濾刪除。
+        
+        Args:
+            source_path: 檔案的來源路徑 (需與 metadata['source'] 一致)
         """
         try:
             # 注意：LangChain 的 Chroma wrapper 可能沒有直接暴露 delete 方法，
