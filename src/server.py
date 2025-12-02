@@ -1,10 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
-
-# from functools import partial
-# import asyncio
-
+import asyncio
 import logging
 from typing import Any, Dict
 
@@ -40,9 +37,9 @@ async def lifespan(app: FastAPI):
     try:
         # [Fix] 使用 run_in_executor 避免阻塞主執行緒 (Event Loop)
         # [Bootstrap] 系統啟動引導 (註冊 + 預熱)
-        # loop = asyncio.get_event_loop()
-        # await loop.run_in_executor(None, bootstrap_system)
-        bootstrap_system()
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, bootstrap_system)
+        # bootstrap_system()
         logger.info("系統初始化完成")
     except Exception as e:
         logger.error(f"系統初始化失敗: {e}")

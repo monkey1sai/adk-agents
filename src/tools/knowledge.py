@@ -41,7 +41,7 @@ def create_search_tool(retriever: RetrievalService, ingestor: IngestionService) 
 
         try:
             # 2. 執行檢索
-            print(f"[DEBUG] 步驟 2: 呼叫 Retriever 進行搜尋...")
+            print("[DEBUG] 步驟 2: 呼叫 Retriever 進行搜尋...")
             result = await retriever.query(query)
             print(f"[DEBUG] 步驟 2: 搜尋完成。結果長度: {len(result)} 字元")
             

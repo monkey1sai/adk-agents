@@ -14,11 +14,7 @@ except ImportError:
 
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
-try:
-    from langchain_core.documents import Document as LangChainDocument
-except ImportError:
-    from langchain.docstore.document import Document as LangChainDocument
-
+from langchain_core.documents import Document as LangChainDocument
 from src.rag.domain.models import Chunk, SearchResult
 from src.rag.ports.repository import VectorStoreRepository
 

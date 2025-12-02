@@ -2,8 +2,8 @@ import os
 import logging
 import hashlib
 import json
-from typing import List, Dict, Set
-from langchain_community.document_loaders import PyPDFLoader, TextLoader, DirectoryLoader
+from typing import List, Dict
+from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.rag.domain.models import Chunk
