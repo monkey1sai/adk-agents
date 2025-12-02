@@ -25,9 +25,9 @@ def get_weather(city: str) -> str:
     # [Fix] 使用 strip() 去除 LLM 可能產生的前後空白，並轉為小寫
     city_cleaned = city.strip().lower()
     
-    result = MOCK_WEATHER_DATA.get(city_cleaned, "Unknown weather data")
+    result = MOCK_WEATHER_DATA.get(city_cleaned, "未知的天氣資料")
     
     # Log 加上引號以便觀察是否有隱藏空白
-    logger.info(f"Fetching weather for: '{city_cleaned}' (raw: '{city}') -> {result}")
+    logger.info(f"正在查詢天氣: '{city_cleaned}' (原始: '{city}') -> {result}")
     
-    return f"The weather in {city.strip()} is {result}."
+    return f"{city.strip()} 的天氣是 {result}。"

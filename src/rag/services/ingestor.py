@@ -28,7 +28,7 @@ class IngestionService:
                 with open(self.state_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                logger.warning(f"Failed to load ingestion state: {e}")
+                logger.warning(f"載入匯入狀態失敗: {e}")
         return {}
 
     def _save_state(self):
@@ -37,7 +37,7 @@ class IngestionService:
             with open(self.state_file, 'w', encoding='utf-8') as f:
                 json.dump(self.processed_files, f, indent=2)
         except Exception as e:
-            logger.error(f"Failed to save ingestion state: {e}")
+            logger.error(f"儲存匯入狀態失敗: {e}")
 
     def _calculate_file_hash(self, filepath: str) -> str:
         """計算檔案的 MD5 Hash。"""
@@ -67,7 +67,7 @@ class IngestionService:
         supported_exts = {".pdf", ".txt", ".md"}
         
         if os.path.exists(folder):
-            logger.info(f"Scanning {folder} for changes...")
+            logger.info(f"正在掃描 {folder} 的變更...")
             for root, _, files in os.walk(folder):
                 for file in files:
                     ext = os.path.splitext(file)[1].lower()
@@ -83,7 +83,7 @@ class IngestionService:
                         if norm_path not in self.processed_files or self.processed_files[norm_path] != file_hash:
                             changed_files.append(full_path)
         else:
-            logger.warning(f"Document folder {folder} does not exist. Assuming all files deleted.")
+            logger.warning(f"文件資料夾 {folder} 不存在。假設所有檔案已被刪除。")
             # current_files_state 保持為空，這將觸發所有已知檔案的刪除邏輯
 
         if not changed_files:
@@ -94,7 +94,7 @@ class IngestionService:
             deleted_files = list(known_files_set - current_files_set)
             
             if deleted_files:
-                logger.info(f"Found {len(deleted_files)} deleted files. Cleaning up database...")
+                logger.info(f"發現 {len(deleted_files)} 個已刪除的檔案。正在清理資料庫...")
                 for deleted_file in deleted_files:
                     # 從 DB 移除
                     self.repo.delete_chunks_by_source(deleted_file)
@@ -103,13 +103,13 @@ class IngestionService:
                     del self.processed_files[deleted_file]
                 
                 self._save_state()
-                logger.info("Cleanup complete.")
+                logger.info("清理完成。")
             else:
-                logger.info("No new, modified, or deleted files found. Skipping ingestion.")
+                logger.info("未發現新增、修改或刪除的檔案。跳過匯入。")
             
             return []
 
-        logger.info(f"Found {len(changed_files)} new or modified files to ingest.")
+        logger.info(f"發現 {len(changed_files)} 個新增或修改的檔案需要匯入。")
 
         # 2. 針對變更的檔案進行載入
         raw_docs = []
@@ -131,7 +131,7 @@ class IngestionService:
                     norm_path = os.path.normpath(file_path)
                     
                     # [Fix] 針對修改的檔案，先清除舊的 Chunks，避免重複或過時資料
-                    logger.info(f"Clearing old chunks for modified file: {norm_path}")
+                    logger.info(f"正在清除修改檔案的舊區塊: {norm_path}")
                     self.repo.delete_chunks_by_source(norm_path)
 
                     for doc in docs:
@@ -142,12 +142,12 @@ class IngestionService:
                     self.processed_files[norm_path] = self._calculate_file_hash(file_path)
                     
             except Exception as e:
-                logger.error(f"Failed to load {file_path}: {e}")
+                logger.error(f"載入 {file_path} 失敗: {e}")
 
         if not raw_docs:
             return []
 
-        logger.info(f"Loaded {len(raw_docs)} raw documents from changed files.")
+        logger.info(f"已從變更的檔案載入 {len(raw_docs)} 份原始文件。")
         
         # Split
         splitter = RecursiveCharacterTextSplitter(
@@ -162,7 +162,7 @@ class IngestionService:
             for doc in split_docs
         ]
         
-        logger.info(f"Created {len(chunks)} chunks.")
+        logger.info(f"已分割成 {len(chunks)} 個區塊。")
         return chunks
 
     def run_pipeline(self, folder: str = "docs"):
@@ -174,4 +174,4 @@ class IngestionService:
             self.repo.add_chunks(chunks)
             # 只有在成功寫入 DB 後才儲存狀態
             self._save_state()
-            logger.info("Ingestion state saved.")
+            logger.info("匯入狀態已儲存。")

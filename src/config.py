@@ -16,6 +16,12 @@ class LLMConfig(BaseSettings):
     api_key: SecretStr = Field(default=SecretStr("fake-key"), description="API Key (敏感資料)", validation_alias="API_KEY")
     base_url: str = Field(default="http://localhost:4000", description="LiteLLM Proxy URL", validation_alias="BASE_URL")
 
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
     @computed_field
     @property
     def full_model_name(self) -> str:
@@ -32,6 +38,12 @@ class RAGConfig(BaseSettings):
     db_path: str = Field(default="vector_db", validation_alias="RAG_DB_PATH")
     embed_model: str = Field(default="embeddinggemma:latest", validation_alias="RAG_EMBED_MODEL")
     docs_folder: str = Field(default="src/docs", validation_alias="RAG_DOCS_FOLDER")
+
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 class Settings(BaseSettings):
     """

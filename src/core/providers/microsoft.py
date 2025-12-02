@@ -29,7 +29,7 @@ class MicrosoftProvider:
         """
         [DI] 接收外部注入的工具列表。
         """
-        logger.info(f"Injecting {len(tools)} tools into MicrosoftProvider...")
+        logger.info(f"正在注入 {len(tools)} 個工具到 MicrosoftProvider...")
         self.tools = [get_weather] + tools
         # 重建 Agent 以套用新工具
         self.agent = self._create_agent()
@@ -51,12 +51,12 @@ class MicrosoftProvider:
             prompt_path = current_dir.parent.parent / "prompts" / "microsoft_agent.md"
             
             if not prompt_path.exists():
-                logger.warning(f"Prompt file not found at {prompt_path}, using default instructions.")
+                logger.warning(f"在 {prompt_path} 找不到提示詞檔案，使用預設指令。")
                 return "你是一個使用 Microsoft ADK 的氣象助理。請用繁體中文回答。"
                 
             return prompt_path.read_text(encoding="utf-8")
         except Exception as e:
-            logger.error(f"Error loading instructions: {e}")
+            logger.error(f"載入指令時發生錯誤: {e}")
             return "你是一個使用 Microsoft ADK 的氣象助理。請用繁體中文回答。"
 
     def _create_agent(self) -> Agent:
@@ -81,7 +81,7 @@ class MicrosoftProvider:
 
     async def run(self, user_query: str, session_id: str = "default") -> str:
         """執行 Agent 並回傳結果"""
-        logger.info(f"[Microsoft ADK] Running agent with query: {user_query} (Session: {session_id})")
+        logger.info(f"[Microsoft ADK] 正在執行 Agent，查詢: {user_query} (工作階段: {session_id})")
         
         result = await Runner.run(self.agent, user_query)
         final_output = str(result.final_output)
@@ -89,7 +89,7 @@ class MicrosoftProvider:
         # [SRE Fix] Robustness Pattern: Manual Tool Execution Recovery
         # 針對小模型 (7B) 容易將 Tool Call 輸出為純文字 JSON 的問題，進行手動救援。
         if '{"name":' in final_output and "arguments" in final_output:
-            logger.warning("⚠️ Detected raw JSON tool call in output. Attempting manual recovery...")
+            logger.warning("⚠️ 偵測到輸出中有原始 JSON 工具呼叫。正在嘗試手動復原...")
             return await self._manual_tool_execution_recovery(final_output, user_query)
         
         return final_output
@@ -109,7 +109,7 @@ class MicrosoftProvider:
             tool_name = tool_call_data.get("name")
             tool_args = tool_call_data.get("arguments", {})
             
-            logger.info(f"🔄 Manual Execution: {tool_name}({tool_args})")
+            logger.info(f"🔄 手動執行: {tool_name}({tool_args})")
             
             # 2. 尋找對應的工具
             target_tool = None
@@ -126,7 +126,7 @@ class MicrosoftProvider:
                     break
             
             if not target_tool:
-                logger.error(f"Tool {tool_name} not found in agent tools.")
+                logger.error(f"在 Agent 工具中找不到工具 {tool_name}。")
                 return raw_output
 
             # 3. 執行工具
@@ -146,22 +146,20 @@ class MicrosoftProvider:
                  else:
                      tool_result = run_method(**tool_args)
             
-            logger.info(f"✅ Tool Result: {str(tool_result)[:100]}...")
+            logger.info(f"✅ 工具執行結果: {str(tool_result)[:100]}...")
             
             # 4. 將結果回傳給 Agent 進行總結 (Recursive Call)
             # 我們構造一個新的 Prompt，包含工具執行結果
             recovery_prompt = (
-                f"User Question: {original_query}\n"
-                f"System: I executed the tool '{tool_name}' for you manually.\n"
-                f"Tool Output: {tool_result}\n"
-                f"Instruction: Answer the user's question using ONLY the Tool Output above. "
-                f"If the Tool Output does not contain the answer, state that you have no information. "
-                f"DO NOT make up information or list unrelated topics."
+                f"使用者問題: {original_query}\n"
+                f"系統: 我已為您手動執行了工具 '{tool_name}'。\n"
+                f"工具輸出: {tool_result}\n"
+                f"指令: 請僅使用上方的工具輸出來回答使用者的問題。如果工具輸出中沒有答案，請說明您沒有相關資訊。切勿編造資訊或列出不相關的主題。"
             )
             
             recovery_result = await Runner.run(self.agent, recovery_prompt)
             return str(recovery_result.final_output)
 
         except Exception as e:
-            logger.error(f"Manual recovery failed: {e}")
+            logger.error(f"手動復原失敗: {e}")
             return raw_output

@@ -49,7 +49,7 @@ class ChromaRepository(VectorStoreRepository):
     def db(self):
         """資料庫連線的延遲初始化 (Lazy initialization)。"""
         if self._db is None:
-            logger.info(f"Initializing ChromaDB at {self.persist_directory} with model {self.embedding_model}")
+            logger.info(f"正在初始化 ChromaDB 於 {self.persist_directory}，使用模型 {self.embedding_model}")
             embeddings = OllamaEmbeddings(model=self.embedding_model)
             self._db = Chroma(
                 persist_directory=self.persist_directory,
@@ -69,7 +69,7 @@ class ChromaRepository(VectorStoreRepository):
         # 嘗試呼叫 persist，若新版移除則忽略
         if hasattr(self.db, "persist"):
             self.db.persist()
-        logger.info(f"Persisted {len(chunks)} chunks to ChromaDB.")
+        logger.info(f"已持久化 {len(chunks)} 個區塊到 ChromaDB。")
 
     def delete_chunks_by_source(self, source_path: str) -> None:
         """
@@ -89,18 +89,18 @@ class ChromaRepository(VectorStoreRepository):
             # 注意：metadata 中的 source 可能是絕對路徑或相對路徑，視 loader 而定。
             # 這裡假設 metadata['source'] 儲存的是完整路徑。
             
-            logger.info(f"Deleting chunks for source: {source_path}")
+            logger.info(f"正在刪除來源的區塊: {source_path}")
             
             # LangChain Chroma 封裝的 delete 方法通常接受 ids。
             # 若要依 metadata 刪除，需存取底層 collection。
             if hasattr(self.db, "_collection"):
                 self.db._collection.delete(where={"source": source_path})
-                logger.info(f"Deleted chunks for {source_path} from ChromaDB.")
+                logger.info(f"已從 ChromaDB 刪除 {source_path} 的區塊。")
             else:
-                logger.warning("Could not access underlying Chroma collection for deletion.")
+                logger.warning("無法存取底層 Chroma 集合以進行刪除。")
                 
         except Exception as e:
-            logger.error(f"Failed to delete chunks for {source_path}: {e}")
+            logger.error(f"刪除 {source_path} 的區塊失敗: {e}")
 
     async def search(self, query: str, k: int = 4) -> List[SearchResult]:
         """

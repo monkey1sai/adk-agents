@@ -19,16 +19,16 @@ class RetrievalService:
             results = await self.repo.search(query_text, k=k)
             
             if not results:
-                return "No relevant information found in the knowledge base."
+                return "在知識庫中找不到相關資訊。"
                 
             # Format context
             context_parts = []
             for i, res in enumerate(results, 1):
-                source = res.chunk.metadata.get('source', 'Unknown')
-                context_parts.append(f"--- Source {i} ({source}) ---\n{res.chunk.content}\n")
+                source = res.chunk.metadata.get('source', '未知來源')
+                context_parts.append(f"--- 來源 {i} ({source}) ---\n{res.chunk.content}\n")
                 
             return "\n".join(context_parts)
         except Exception as e:
             # [SRE Fix] 錯誤邊界：捕獲例外並回傳優雅的訊息
             logger.error(f"RAG Retrieval failed: {e}", exc_info=True)
-            return "Error: Unable to access the knowledge base at this moment. Please try again later."
+            return "錯誤: 目前無法存取知識庫，請稍後再試。"

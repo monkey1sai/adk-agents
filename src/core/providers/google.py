@@ -43,7 +43,7 @@ class GoogleProvider:
         [DI] 接收外部注入的工具列表。
         當 Factory 呼叫此方法時，我們會更新 Agent 的工具配置。
         """
-        logger.info(f"Injecting {len(tools)} tools into GoogleProvider...")
+        logger.info(f"正在注入 {len(tools)} 個工具到 GoogleProvider...")
         # 合併預設工具與注入工具
         self.tools = [get_weather] + tools
         
@@ -74,12 +74,12 @@ class GoogleProvider:
             prompt_path = current_dir.parent.parent / "prompts" / "google_agent.md"
             
             if not prompt_path.exists():
-                logger.warning(f"Prompt file not found at {prompt_path}, using default instructions.")
+                logger.warning(f"在 {prompt_path} 找不到提示詞檔案，使用預設指令。")
                 return "你是一個使用 Google ADK 知識助理。請用繁體中文回答。"
                 
             return prompt_path.read_text(encoding="utf-8")
         except Exception as e:
-            logger.error(f"Error loading instructions: {e}")
+            logger.error(f"載入指令時發生錯誤: {e}")
             return "你是一個使用 Google ADK 知識助理。請用繁體中文回答。"
 
     def _create_agent(self) -> Agent:
@@ -93,7 +93,7 @@ class GoogleProvider:
 
     async def run(self, user_query: str, session_id: str = "default") -> str:
         """執行 Agent 並回傳結果"""
-        logger.info(f"[Google ADK] Running agent with query: {user_query} (Session: {session_id})")
+        logger.info(f"[Google ADK] 正在執行 Agent，查詢: {user_query} (工作階段: {session_id})")
         
         # 使用傳入的 session_id，並固定 user_id (或從外部傳入)
         user_id = "user_1"

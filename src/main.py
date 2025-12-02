@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 async def main():
-    print(f"=== Agent System Starting ({settings.adk_framework.value.upper()} Mode) ===")
+    print(f"=== Agent 系統啟動中 ({settings.adk_framework.value.upper()} 模式) ===")
     
     # [Bootstrap] 系統啟動引導 (註冊 + 預熱)
     bootstrap_system()
@@ -21,19 +21,19 @@ async def main():
         runner = AgentFactory.create_runner()
         
         # 2. 執行查詢
-        query = "人工智慧最新研究進展 google在 2025 在最新發展"
+        query = "人工智慧最新研究進展 google在 2025年 在最新發展"
         #query = "請問吳東凌在人工智慧發展報告中負責什麼？"
         session_id = "session_demo_001" # 模擬 Session ID
-        print(f"\n[User]: {query} (Session: {session_id})")
+        print(f"\n[使用者]: {query} (工作階段: {session_id})")
         response = await runner.run(query, session_id=session_id)
         print(f"\n[Agent]: {response}")
         
     except ImportError as e:
-        print(f"\n[Config Error]: {e}")
-        print("Tip: Check your .env file or install missing packages.")
+        print(f"\n[設定錯誤]: {e}")
+        print("提示: 請檢查您的 .env 檔案或安裝缺少的套件。")
     except Exception as e:
-        print(f"\n[Error]: {e}")
-        logging.exception("Full traceback:")
+        print(f"\n[錯誤]: {e}")
+        logging.exception("完整追蹤:")
 
 if __name__ == "__main__":
     asyncio.run(main())

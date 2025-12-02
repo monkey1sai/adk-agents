@@ -16,7 +16,7 @@ def bootstrap_rag() -> Tuple[SearchTool, IngestTool]:
     Returns:
         Tuple[SearchTool, IngestTool]: 已注入依賴的工具函式。
     """
-    logger.info("Bootstrapping RAG Subsystem...")
+    logger.info("正在啟動 RAG 子系統...")
     
     # 1. 初始化 Repository (Infrastructure Layer)
     repo = ChromaRepository(
@@ -25,7 +25,7 @@ def bootstrap_rag() -> Tuple[SearchTool, IngestTool]:
     )
     
     # [SRE] 預熱 DB 連線
-    logger.info("Warming up Vector DB connection...")
+    logger.info("正在預熱向量資料庫連線...")
     _ = repo.db
     
     # 2. 初始化 Services (Application Layer)
@@ -37,5 +37,5 @@ def bootstrap_rag() -> Tuple[SearchTool, IngestTool]:
     search_tool = create_search_tool(retriever, ingestor)
     ingest_tool = create_ingest_tool(ingestor)
     
-    logger.info("RAG Subsystem ready.")
+    logger.info("RAG 子系統已就緒。")
     return search_tool, ingest_tool

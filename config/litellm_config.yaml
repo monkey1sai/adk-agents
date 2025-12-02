@@ -1,10 +1,4 @@
 model_list:
-  # - model_name: ollama/llama3
-  #   litellm_params:
-  #     model: openai/ollama/llama3.1:8b
-  #     temperature: 0
-  #     api_base: http:/localhost:11434/v1
-  #     aoi_key: ollama
 
   - model_name: ollama/qwen2.5
     litellm_params:
@@ -37,6 +31,7 @@ model_list:
       api_base: os.environ/OLLAMA_API_BASE
       api_key: ollama
 
+  # 比qwen2.5做RAG更好，回復更加精確不會胡扯
   - model_name: ollama/llama3.1
     litellm_params:
       model: openai/llama3.1:8b

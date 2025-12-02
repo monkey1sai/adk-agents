@@ -51,6 +51,6 @@ def create_ingest_tool(ingestor: IngestionService) -> IngestTool:
         """
         target_folder = folder or settings.rag.docs_folder
         ingestor.run_pipeline(target_folder)
-        return f"Ingestion complete from {target_folder}"
+        return f"從 {target_folder} 匯入完成"
         
     return ingest_documents
